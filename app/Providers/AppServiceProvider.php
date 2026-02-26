@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Domain\AccountRepositoryInterface;
-use App\Infrastructure\InMemoryAccountRepository;
+use App\Infrastructure\JsonFileAccountRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -13,7 +13,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(AccountRepositoryInterface::class, InMemoryAccountRepository::class);
+        $this->app->singleton(AccountRepositoryInterface::class, JsonFileAccountRepository::class);
     }
 
     /**

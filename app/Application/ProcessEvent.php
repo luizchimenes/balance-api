@@ -13,12 +13,71 @@ class ProcessEvent
 
     public function handle(array $payload): EventResult
     {
-        $result = $this->accounts->processEvent($payload);
+        $type = $payload['type'] ?? null;
 
-        if ($result === null) {
-            return EventResult::created([]);
+        return match ($type) {
+            'deposit' => $this->handleDeposit(
+                (string) $payload['destination'],
+                (int) $payload['amount']
+            ),
+            'withdraw' => $this->handleWithdraw(
+                (string) $payload['origin'],
+                (int) $payload['amount']
+            ),
+            'transfer' => $this->handleTransfer(
+                (string) $payload['origin'],
+                (string) $payload['destination'],
+                (int) $payload['amount']
+            ),
+            default => EventResult::notFound(),
+        };
+    }
+
+    private function handleDeposit(string $destination, int $amount): EventResult
+    {
+        $balance = $this->accounts->deposit($destination, $amount);
+
+        return EventResult::created([
+            'destination' => [
+                'id' => $destination,
+                'balance' => $balance,
+            ],
+        ]);
+    }
+
+    private function handleWithdraw(string $origin, int $amount): EventResult
+    {
+        $balance = $this->accounts->withdraw($origin, $amount);
+
+        if ($balance === null) {
+            return EventResult::notFound();
         }
 
-        return EventResult::created($result);
+        return EventResult::created([
+            'origin' => [
+                'id' => $origin,
+                'balance' => $balance,
+            ],
+        ]);
+    }
+
+    private function handleTransfer(string $origin, string $destination, int $amount): EventResult
+    {
+        $balances = $this->accounts->transfer($origin, $destination, $amount);
+
+        if ($balances === null) {
+            return EventResult::notFound();
+        }
+
+        return EventResult::created([
+            'origin' => [
+                'id' => $origin,
+                'balance' => $balances['origin'],
+            ],
+            'destination' => [
+                'id' => $destination,
+                'balance' => $balances['destination'],
+            ],
+        ]);
     }
 }
