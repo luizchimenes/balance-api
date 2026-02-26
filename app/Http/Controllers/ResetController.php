@@ -10,6 +10,6 @@ class ResetController extends Controller
     {
         $useCase->handle();
 
-        return response('', 200);
+        return response('OK', 200)->header('Content-Type', 'text/plain');
     }
 }
